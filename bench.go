@@ -6,6 +6,31 @@ import "net/http"
 import "os"
 import "time"
 
+type Worker struct {
+	client  http.Client
+	request http.Request
+}
+
+func CreateWorker(url string) (*Worker, error) {
+	client := &http.Client{Timeout: time.Duration(100) * time.Second}
+	request, err := http.NewRequest("GET", url, nil)
+	worker := &Worker{client: *client, request: *request}
+
+	return worker, err
+}
+
+func (w *Worker) SetBasicAuth(user string, password string) {
+	w.request.SetBasicAuth(user, password)
+}
+
+func (w *Worker) Request() (*http.Response, time.Duration, error) {
+	start := time.Now()
+	response, err := w.client.Do(&w.request)
+	elapsed_msec := time.Now().Sub(start) / time.Millisecond
+
+	return response, elapsed_msec, err
+}
+
 func main() {
 	var (
 		url             string
@@ -46,29 +71,25 @@ func main() {
 				done <- struct{}{}
 			}()
 
-			client := &http.Client{Timeout: time.Duration(100) * time.Second}
-
-			req, err := http.NewRequest("GET", url, nil)
+			worker, err := CreateWorker(url)
 			if err != nil {
 				fmt.Println(err)
 				return
 			}
 
 			if basic_auth_user != "" && basic_auth_pass != "" {
-				req.SetBasicAuth(basic_auth_user, basic_auth_pass)
+				worker.SetBasicAuth(basic_auth_user, basic_auth_pass)
 			}
 
-			start := time.Now()
-			resp, err := client.Do(req)
-			elapsed := time.Now().Sub(start) / time.Millisecond
-			ch <- elapsed
-
+			response, elapsed_msec, err := worker.Request()
 			if err != nil {
 				fmt.Printf("%sへのアクセスに失敗しました %s\n", url, err)
 				return
 			}
 
-			fmt.Printf("Response Time: %d msec, Status: %s\n", elapsed, resp.Status)
+			ch <- elapsed_msec
+
+			fmt.Printf("Response Time: %d msec, Status: %s\n", elapsed_msec, response.Status)
 		}()
 	}
 
