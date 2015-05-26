@@ -1,15 +1,25 @@
-### Usage
+## NAME
+
+benchmark-tool - Web server benchmarking tool
+
+## USAGE
 
 ```
-./bench --url https://github.com/waniji/benchmark-tool --count 10 --worker 3
-  --url             : アクセスするURL
-  --count           : URLにアクセスする回数
-  --worker          : 同時アクセス数
-  --basic-auth-user : BASIC認証に使用するユーザー
-  --basic-auth-pass : BASIC認証に使用するパスワード
+benchmark-tool [options]
 ```
 
-### Result
+## OPTIONS
+
+```
+--url, -u           アクセスするURL
+--count, -c "1"     URLにアクセスする回数
+--worker, -w "1"    同時アクセス数
+--basic-auth-user   BASIC認証に使用するユーザー
+--basic-auth-pass   BASIC認証に使用するパスワード
+--version, -v       print the version
+```
+
+## RESULT
 
 ```
 URL: https://github.com/waniji/benchmark-tool
@@ -32,4 +42,8 @@ Average Response Time: 834 msec
 Minimum Response Time: 721 msec
 Maximum Response Time: 932 msec
 ```
+
+## AUTHOR
+
+Makoto Sasaki
 
