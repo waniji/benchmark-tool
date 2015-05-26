@@ -1,10 +1,12 @@
 package main
 
-import "flag"
-import "fmt"
-import "net/http"
-import "os"
-import "time"
+import (
+	"fmt"
+	"github.com/codegangsta/cli"
+	"net/http"
+	"os"
+	"time"
+)
 
 type Worker struct {
 	client  http.Client
@@ -31,23 +33,17 @@ func (w *Worker) Request() (*http.Response, time.Duration, error) {
 	return response, elapsed_msec, err
 }
 
-func main() {
-	var (
-		url             string
-		basic_auth_user string
-		basic_auth_pass string
-		max_count       int
-		max_workers     int
-	)
+func bench(c *cli.Context) {
 
-	flag.StringVar(&url, "url", "", "アクセスするURL")
-	flag.IntVar(&max_count, "count", 1, "URLにアクセスする回数")
-	flag.IntVar(&max_workers, "worker", 1, "同時アクセス数")
-	flag.StringVar(&basic_auth_user, "basic-auth-user", "", "BASIC認証に使用するユーザー")
-	flag.StringVar(&basic_auth_pass, "basic-auth-pass", "", "BASIC認証に使用するパスワード")
-	flag.Parse()
+	url := c.String("url")
+	max_count := c.Int("count")
+	max_workers := c.Int("count")
+	basic_auth_user := c.String("basic-auth-user")
+	basic_auth_pass := c.String("basic-auth-pass")
+
 	if url == "" {
-		fmt.Printf("urlが不正です\n")
+		fmt.Println("urlは必須です")
+		cli.ShowAppHelp(c)
 		os.Exit(1)
 	}
 
