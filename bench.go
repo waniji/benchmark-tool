@@ -28,18 +28,18 @@ func (w *Worker) SetBasicAuth(user string, password string) {
 func (w *Worker) Request() (*http.Response, time.Duration, error) {
 	start := time.Now()
 	response, err := w.client.Do(&w.request)
-	elapsed_msec := time.Now().Sub(start) / time.Millisecond
+	elapsedMsec := time.Now().Sub(start) / time.Millisecond
 
-	return response, elapsed_msec, err
+	return response, elapsedMsec, err
 }
 
 func bench(c *cli.Context) {
 
 	url := c.String("url")
-	max_count := c.Int("count")
-	max_workers := c.Int("count")
-	basic_auth_user := c.String("basic-auth-user")
-	basic_auth_pass := c.String("basic-auth-pass")
+	maxAccess := c.Int("count")
+	maxWorkers := c.Int("count")
+	basicAuthUser := c.String("basic-auth-user")
+	basicAuthPass := c.String("basic-auth-pass")
 
 	if url == "" {
 		fmt.Println("urlは必須です")
@@ -48,16 +48,16 @@ func bench(c *cli.Context) {
 	}
 
 	fmt.Printf("URL: %s\n", url)
-	fmt.Printf("Total Access Count: %d\n", max_count)
-	fmt.Printf("Concurrency: %d\n", max_workers)
+	fmt.Printf("Total Access Count: %d\n", maxAccess)
+	fmt.Printf("Concurrency: %d\n", maxWorkers)
 	fmt.Println("--------------------------------------------------")
 
-	worker := make(chan struct{}, max_workers)
-	done := make(chan struct{}, max_count)
-	ch := make(chan time.Duration, max_count)
+	worker := make(chan struct{}, maxWorkers)
+	done := make(chan struct{}, maxAccess)
+	ch := make(chan time.Duration, maxAccess)
 
-	main_start := time.Now()
-	for count := 0; count < max_count; count++ {
+	mainStart := time.Now()
+	for count := 0; count < maxAccess; count++ {
 
 		worker <- struct{}{}
 
@@ -73,46 +73,46 @@ func bench(c *cli.Context) {
 				return
 			}
 
-			if basic_auth_user != "" && basic_auth_pass != "" {
-				worker.SetBasicAuth(basic_auth_user, basic_auth_pass)
+			if basicAuthUser != "" && basicAuthPass != "" {
+				worker.SetBasicAuth(basicAuthUser, basicAuthPass)
 			}
 
-			response, elapsed_msec, err := worker.Request()
+			response, elapsedMsec, err := worker.Request()
 			if err != nil {
 				fmt.Printf("%sへのアクセスに失敗しました %s\n", url, err)
 				return
 			}
 
-			ch <- elapsed_msec
+			ch <- elapsedMsec
 
-			fmt.Printf("Response Time: %d msec, Status: %s\n", elapsed_msec, response.Status)
+			fmt.Printf("Response Time: %d msec, Status: %s\n", elapsedMsec, response.Status)
 		}()
 	}
 
-	for i := 0; i < max_count; i++ {
+	for i := 0; i < maxAccess; i++ {
 		<-done
 	}
-	main_elapsed := time.Now().Sub(main_start) / time.Millisecond
+	mainElapsedMsec := time.Now().Sub(mainStart) / time.Millisecond
 	close(worker)
 	close(done)
 	close(ch)
 
-	var total_elapsed time.Duration = 0
-	var minimum_elapsed time.Duration = 0
-	var maximum_elapsed time.Duration = 0
+	var totalElapsedMsec time.Duration = 0
+	var minElapsedMsec time.Duration = 0
+	var maxElapsedMsec time.Duration = 0
 	for elapsed := range ch {
-		total_elapsed += elapsed
-		if maximum_elapsed < elapsed {
-			maximum_elapsed = elapsed
+		totalElapsedMsec += elapsed
+		if maxElapsedMsec < elapsed {
+			maxElapsedMsec = elapsed
 		}
-		if minimum_elapsed > elapsed || minimum_elapsed == 0 {
-			minimum_elapsed = elapsed
+		if minElapsedMsec > elapsed || minElapsedMsec == 0 {
+			minElapsedMsec = elapsed
 		}
 	}
 
 	fmt.Println("--------------------------------------------------")
-	fmt.Printf("Total Time           : %d msec\n", main_elapsed)
-	fmt.Printf("Average Response Time: %d msec\n", total_elapsed/time.Duration(max_count))
-	fmt.Printf("Minimum Response Time: %d msec\n", minimum_elapsed)
-	fmt.Printf("Maximum Response Time: %d msec\n", maximum_elapsed)
+	fmt.Printf("Total Time           : %d msec\n", mainElapsedMsec)
+	fmt.Printf("Average Response Time: %d msec\n", totalElapsedMsec/time.Duration(maxAccess))
+	fmt.Printf("Minimum Response Time: %d msec\n", minElapsedMsec)
+	fmt.Printf("Maximum Response Time: %d msec\n", maxElapsedMsec)
 }
