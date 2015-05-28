@@ -37,7 +37,7 @@ func bench(c *cli.Context) {
 
 	url := c.String("url")
 	maxAccess := c.Int("count")
-	maxWorkers := c.Int("count")
+	maxWorkers := c.Int("worker")
 	basicAuthUser := c.String("basic-auth-user")
 	basicAuthPass := c.String("basic-auth-pass")
 
