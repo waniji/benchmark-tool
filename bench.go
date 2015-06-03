@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/codegangsta/cli"
 	"os"
+	"strings"
 )
 
 func bench(c *cli.Context) {
@@ -20,13 +21,12 @@ func bench(c *cli.Context) {
 		os.Exit(1)
 	}
 
-	fmt.Printf("URL: %s\n", url)
 	fmt.Printf("Total Access Count: %d\n", maxAccess)
 	fmt.Printf("Concurrency: %d\n", maxWorkers)
 	fmt.Println("--------------------------------------------------")
 
 	manager := &WorkerManager{
-		url:           url,
+		urls:          strings.Split(url, ","),
 		basicAuthUser: basicAuthUser,
 		basicAuthPass: basicAuthPass,
 		maxAccess:     maxAccess,

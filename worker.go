@@ -8,7 +8,7 @@ import (
 
 type WorkerManager struct {
 	workers       []*Worker
-	url           string
+	urls          []string
 	basicAuthUser string
 	basicAuthPass string
 	maxAccess     int
@@ -42,7 +42,7 @@ func (wm *WorkerManager) RunWorkers() {
 
 func (wm *WorkerManager) CreateWorker() (*Worker, error) {
 	client := &http.Client{Timeout: time.Duration(100) * time.Second}
-	request, err := http.NewRequest("GET", wm.url, nil)
+	request, err := http.NewRequest("GET", wm.SelectUrl(), nil)
 	worker := &Worker{
 		client:       *client,
 		request:      *request,
@@ -57,6 +57,16 @@ func (wm *WorkerManager) CreateWorker() (*Worker, error) {
 	wm.workers = append(wm.workers, worker)
 
 	return worker, err
+}
+
+func (wm *WorkerManager) SelectUrl() string {
+	if len(wm.urls) == 1 {
+		return wm.urls[0]
+	}
+	url := wm.urls[0]
+	wm.urls = wm.urls[1:]
+	wm.urls = append(wm.urls, url)
+	return url
 }
 
 func (wm *WorkerManager) NeedToBasicAuthSet() bool {
@@ -118,7 +128,7 @@ func (w *Worker) Run() {
 		return
 	}
 
-	fmt.Printf("Response Time: %d msec, Status: %s\n", w.elapsedMsec, response.Status)
+	fmt.Printf("Time: %d msec, Status: %s, URL: %s\n", w.elapsedMsec, response.Status, w.request.URL)
 }
 
 type Result struct {
