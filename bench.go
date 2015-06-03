@@ -9,20 +9,30 @@ import (
 )
 
 type WorkerManager struct {
-	worker        []Worker
+	workers       []*Worker
 	url           string
 	basicAuthUser string
 	basicAuthPass string
+	activeWorker  chan struct{}
+	doneWorker    chan struct{}
 }
 
 func (wm *WorkerManager) CreateWorker() (*Worker, error) {
+	wm.activeWorker <- struct{}{}
 	client := &http.Client{Timeout: time.Duration(100) * time.Second}
 	request, err := http.NewRequest("GET", wm.url, nil)
-	worker := &Worker{client: *client, request: *request}
+	worker := &Worker{
+		client:       *client,
+		request:      *request,
+		activeWorker: wm.activeWorker,
+		doneWorker:   wm.doneWorker,
+	}
 
 	if wm.NeedToBasicAuthSet() {
 		worker.SetBasicAuth(wm.basicAuthUser, wm.basicAuthPass)
 	}
+
+	wm.workers = append(wm.workers, worker)
 
 	return worker, err
 }
@@ -34,21 +44,44 @@ func (wm *WorkerManager) NeedToBasicAuthSet() bool {
 	return false
 }
 
+func (wm *WorkerManager) WaitForWorkersToFinish() {
+	for i := 0; i < cap(wm.doneWorker); i++ {
+		<-wm.doneWorker
+	}
+}
+
+func (wm *WorkerManager) Finish() {
+	close(wm.activeWorker)
+	close(wm.doneWorker)
+}
+
 type Worker struct {
-	client  http.Client
-	request http.Request
+	client       http.Client
+	request      http.Request
+	elapsedMsec  time.Duration
+	activeWorker chan struct{}
+	doneWorker   chan struct{}
 }
 
 func (w *Worker) SetBasicAuth(user string, password string) {
 	w.request.SetBasicAuth(user, password)
 }
 
-func (w *Worker) Request() (*http.Response, time.Duration, error) {
+func (w *Worker) Run() {
+	defer func() {
+		<-w.activeWorker
+		w.doneWorker <- struct{}{}
+	}()
+
 	start := time.Now()
 	response, err := w.client.Do(&w.request)
-	elapsedMsec := time.Now().Sub(start) / time.Millisecond
+	w.elapsedMsec = time.Now().Sub(start) / time.Millisecond
+	if err != nil {
+		fmt.Printf("%sへのアクセスに失敗しました %s\n", w.request.URL, err)
+		return
+	}
 
-	return response, elapsedMsec, err
+	fmt.Printf("Response Time: %d msec, Status: %s\n", w.elapsedMsec, response.Status)
 }
 
 func bench(c *cli.Context) {
@@ -70,61 +103,41 @@ func bench(c *cli.Context) {
 	fmt.Printf("Concurrency: %d\n", maxWorkers)
 	fmt.Println("--------------------------------------------------")
 
-	workerCh := make(chan struct{}, maxWorkers)
-	done := make(chan struct{}, maxAccess)
-	ch := make(chan time.Duration, maxAccess)
-
 	manager := &WorkerManager{
 		url:           url,
 		basicAuthUser: basicAuthUser,
 		basicAuthPass: basicAuthPass,
+		activeWorker:  make(chan struct{}, maxWorkers),
+		doneWorker:    make(chan struct{}, maxAccess),
 	}
+
 	mainStart := time.Now()
 	for count := 0; count < maxAccess; count++ {
 
-		workerCh <- struct{}{}
 		worker, err := manager.CreateWorker()
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
 
-		go func() {
-			defer func() {
-				<-workerCh
-				done <- struct{}{}
-			}()
-
-			response, elapsedMsec, err := worker.Request()
-			if err != nil {
-				fmt.Printf("%sへのアクセスに失敗しました %s\n", url, err)
-				return
-			}
-
-			ch <- elapsedMsec
-
-			fmt.Printf("Response Time: %d msec, Status: %s\n", elapsedMsec, response.Status)
-		}()
+		go worker.Run()
 	}
 
-	for i := 0; i < maxAccess; i++ {
-		<-done
-	}
+	manager.WaitForWorkersToFinish()
+	manager.Finish()
 	mainElapsedMsec := time.Now().Sub(mainStart) / time.Millisecond
-	close(workerCh)
-	close(done)
-	close(ch)
 
 	var totalElapsedMsec time.Duration = 0
 	var minElapsedMsec time.Duration = 0
 	var maxElapsedMsec time.Duration = 0
-	for elapsed := range ch {
-		totalElapsedMsec += elapsed
-		if maxElapsedMsec < elapsed {
-			maxElapsedMsec = elapsed
+
+	for _, worker := range manager.workers {
+		totalElapsedMsec += worker.elapsedMsec
+		if maxElapsedMsec < worker.elapsedMsec {
+			maxElapsedMsec = worker.elapsedMsec
 		}
-		if minElapsedMsec > elapsed || minElapsedMsec == 0 {
-			minElapsedMsec = elapsed
+		if minElapsedMsec > worker.elapsedMsec || minElapsedMsec == 0 {
+			minElapsedMsec = worker.elapsedMsec
 		}
 	}
 
