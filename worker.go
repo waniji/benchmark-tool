@@ -73,18 +73,18 @@ func (wm *WorkerManager) WaitForWorkersToFinish() {
 }
 
 func (wm *WorkerManager) CalcElapsedTime() {
-	var result Result
+
+	var sumTotalElapsedMsec time.Duration
 	for _, worker := range wm.workers {
-		result.totalElapsedMsec += worker.elapsedMsec
-		if result.maximumElapsedMsec < worker.elapsedMsec {
-			result.maximumElapsedMsec = worker.elapsedMsec
+		sumTotalElapsedMsec += worker.elapsedMsec
+		if wm.result.maximumElapsedMsec < worker.elapsedMsec {
+			wm.result.maximumElapsedMsec = worker.elapsedMsec
 		}
-		if result.minimumElapsedMsec > worker.elapsedMsec || result.minimumElapsedMsec == 0 {
-			result.minimumElapsedMsec = worker.elapsedMsec
+		if wm.result.minimumElapsedMsec > worker.elapsedMsec || wm.result.minimumElapsedMsec == 0 {
+			wm.result.minimumElapsedMsec = worker.elapsedMsec
 		}
 	}
-	result.averageElapsedMsec = wm.result.totalElapsedMsec / time.Duration(wm.maxAccess)
-	wm.result = result
+	wm.result.averageElapsedMsec = sumTotalElapsedMsec / time.Duration(wm.maxAccess)
 }
 
 func (wm *WorkerManager) Cleanup() {
