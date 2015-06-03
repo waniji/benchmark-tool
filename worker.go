@@ -11,12 +11,36 @@ type WorkerManager struct {
 	url           string
 	basicAuthUser string
 	basicAuthPass string
+	maxAccess     int
+	maxWorkers    int
+	result        Result
 	activeWorker  chan struct{}
 	doneWorker    chan struct{}
 }
 
+func (wm *WorkerManager) Start() {
+	start := time.Now()
+	wm.RunWorkers()
+	wm.WaitForWorkersToFinish()
+	wm.result.totalElapsedMsec = time.Now().Sub(start) / time.Millisecond
+	wm.CalcElapsedTime()
+	wm.Cleanup()
+}
+
+func (wm *WorkerManager) RunWorkers() {
+	for count := 0; count < wm.maxAccess; count++ {
+
+		wm.activeWorker <- struct{}{}
+		worker, err := wm.CreateWorker()
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		go worker.Run()
+	}
+}
+
 func (wm *WorkerManager) CreateWorker() (*Worker, error) {
-	wm.activeWorker <- struct{}{}
 	client := &http.Client{Timeout: time.Duration(100) * time.Second}
 	request, err := http.NewRequest("GET", wm.url, nil)
 	worker := &Worker{
@@ -48,7 +72,22 @@ func (wm *WorkerManager) WaitForWorkersToFinish() {
 	}
 }
 
-func (wm *WorkerManager) Finish() {
+func (wm *WorkerManager) CalcElapsedTime() {
+	var result Result
+	for _, worker := range wm.workers {
+		result.totalElapsedMsec += worker.elapsedMsec
+		if result.maximumElapsedMsec < worker.elapsedMsec {
+			result.maximumElapsedMsec = worker.elapsedMsec
+		}
+		if result.minimumElapsedMsec > worker.elapsedMsec || result.minimumElapsedMsec == 0 {
+			result.minimumElapsedMsec = worker.elapsedMsec
+		}
+	}
+	result.averageElapsedMsec = wm.result.totalElapsedMsec / time.Duration(wm.maxAccess)
+	wm.result = result
+}
+
+func (wm *WorkerManager) Cleanup() {
 	close(wm.activeWorker)
 	close(wm.doneWorker)
 }
@@ -80,4 +119,11 @@ func (w *Worker) Run() {
 	}
 
 	fmt.Printf("Response Time: %d msec, Status: %s\n", w.elapsedMsec, response.Status)
+}
+
+type Result struct {
+	totalElapsedMsec   time.Duration
+	averageElapsedMsec time.Duration
+	minimumElapsedMsec time.Duration
+	maximumElapsedMsec time.Duration
 }
