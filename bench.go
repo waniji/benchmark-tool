@@ -8,17 +8,35 @@ import (
 	"time"
 )
 
+type WorkerManager struct {
+	worker        []Worker
+	url           string
+	basicAuthUser string
+	basicAuthPass string
+}
+
+func (wm *WorkerManager) CreateWorker() (*Worker, error) {
+	client := &http.Client{Timeout: time.Duration(100) * time.Second}
+	request, err := http.NewRequest("GET", wm.url, nil)
+	worker := &Worker{client: *client, request: *request}
+
+	if wm.NeedToBasicAuthSet() {
+		worker.SetBasicAuth(wm.basicAuthUser, wm.basicAuthPass)
+	}
+
+	return worker, err
+}
+
+func (wm *WorkerManager) NeedToBasicAuthSet() bool {
+	if wm.basicAuthUser != "" && wm.basicAuthPass != "" {
+		return true
+	}
+	return false
+}
+
 type Worker struct {
 	client  http.Client
 	request http.Request
-}
-
-func CreateWorker(url string) (*Worker, error) {
-	client := &http.Client{Timeout: time.Duration(100) * time.Second}
-	request, err := http.NewRequest("GET", url, nil)
-	worker := &Worker{client: *client, request: *request}
-
-	return worker, err
 }
 
 func (w *Worker) SetBasicAuth(user string, password string) {
@@ -52,30 +70,30 @@ func bench(c *cli.Context) {
 	fmt.Printf("Concurrency: %d\n", maxWorkers)
 	fmt.Println("--------------------------------------------------")
 
-	worker := make(chan struct{}, maxWorkers)
+	workerCh := make(chan struct{}, maxWorkers)
 	done := make(chan struct{}, maxAccess)
 	ch := make(chan time.Duration, maxAccess)
 
+	manager := &WorkerManager{
+		url:           url,
+		basicAuthUser: basicAuthUser,
+		basicAuthPass: basicAuthPass,
+	}
 	mainStart := time.Now()
 	for count := 0; count < maxAccess; count++ {
 
-		worker <- struct{}{}
+		workerCh <- struct{}{}
+		worker, err := manager.CreateWorker()
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
 
 		go func() {
 			defer func() {
-				<-worker
+				<-workerCh
 				done <- struct{}{}
 			}()
-
-			worker, err := CreateWorker(url)
-			if err != nil {
-				fmt.Println(err)
-				return
-			}
-
-			if basicAuthUser != "" && basicAuthPass != "" {
-				worker.SetBasicAuth(basicAuthUser, basicAuthPass)
-			}
 
 			response, elapsedMsec, err := worker.Request()
 			if err != nil {
@@ -93,7 +111,7 @@ func bench(c *cli.Context) {
 		<-done
 	}
 	mainElapsedMsec := time.Now().Sub(mainStart) / time.Millisecond
-	close(worker)
+	close(workerCh)
 	close(done)
 	close(ch)
 
