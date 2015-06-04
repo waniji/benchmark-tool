@@ -18,13 +18,15 @@ type WorkerManager struct {
 	doneWorker    chan struct{}
 }
 
-func (wm *WorkerManager) Start() {
-	start := time.Now()
-	wm.RunWorkers()
-	wm.WaitForWorkersToFinish()
-	wm.result.totalElapsedMsec = time.Now().Sub(start) / time.Millisecond
-	wm.CalcElapsedTime()
-	wm.Cleanup()
+func (manager *WorkerManager) Start() {
+	watcher := &WorkerWatcher{doneWorker: manager.doneWorker}
+	watcher.Start()
+	manager.RunWorkers()
+	watcher.WaitForFinish()
+
+	manager.result.totalElapsedMsec = watcher.elapsedMsec
+	manager.CalcElapsedTime()
+	manager.Cleanup()
 }
 
 func (wm *WorkerManager) RunWorkers() {
@@ -74,12 +76,6 @@ func (wm *WorkerManager) NeedToBasicAuthSet() bool {
 		return true
 	}
 	return false
-}
-
-func (wm *WorkerManager) WaitForWorkersToFinish() {
-	for i := 0; i < cap(wm.doneWorker); i++ {
-		<-wm.doneWorker
-	}
 }
 
 func (wm *WorkerManager) CalcElapsedTime() {
