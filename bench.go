@@ -16,10 +16,6 @@ func bench(c *cli.Context) {
 		os.Exit(1)
 	}
 
-	fmt.Printf("Total Access Count: %d\n", config.MaxAccess)
-	fmt.Printf("Concurrency: %d\n", config.MaxWorkers)
-	fmt.Println("--------------------------------------------------")
-
 	manager := &WorkerManager{
 		urls:          config.URLs,
 		basicAuthUser: config.BasicAuthUser,
@@ -31,7 +27,10 @@ func bench(c *cli.Context) {
 	}
 	manager.Start()
 
-	fmt.Println("--------------------------------------------------")
+	fmt.Println("")
+	fmt.Printf("Total Access Count: %d\n", config.MaxAccess)
+	fmt.Printf("Concurrency: %d\n", config.MaxWorkers)
+	fmt.Println("")
 	fmt.Printf("Total Time           : %d msec\n", manager.result.totalElapsedMsec)
 	fmt.Printf("Average Response Time: %d msec\n", manager.result.averageElapsedMsec)
 	fmt.Printf("Minimum Response Time: %d msec\n", manager.result.minimumElapsedMsec)

@@ -117,14 +117,8 @@ func (w *Worker) Run() {
 	}()
 
 	start := time.Now()
-	response, err := w.client.Do(&w.request)
+	w.client.Do(&w.request)
 	w.elapsedMsec = time.Now().Sub(start) / time.Millisecond
-	if err != nil {
-		fmt.Printf("%sへのアクセスに失敗しました %s\n", w.request.URL, err)
-		return
-	}
-
-	fmt.Printf("Time: %d msec, Status: %s, URL: %s\n", w.elapsedMsec, response.Status, w.request.URL)
 }
 
 type Result struct {
