@@ -11,36 +11,47 @@ benchmark-tool [options]
 ## OPTIONS
 
 ```
---url, -u           アクセスするURL
---count, -c "1"     URLにアクセスする回数
---worker, -w "1"    同時アクセス数
---basic-auth-user   BASIC認証に使用するユーザー
---basic-auth-pass   BASIC認証に使用するパスワード
---version, -v       print the version
+--config-file, -f    設定ファイル
+--url, -u            アクセスするURL
+--count, -c "0"      URLにアクセスする回数
+--worker, -w "0"     同時アクセス数
+--basic-auth-user    BASIC認証に使用するユーザー
+--basic-auth-pass    BASIC認証に使用するパスワード
+--version, -v        print the version
+```
+
+## CONFIG FILE EXAMPLE
+
+```json
+{
+    "url": [
+        "http://github.com",
+        "http://www.google.com"
+    ],
+    "count": 30,
+    "worker": 10,
+    "basic-auth-user": "user",
+    "basic-auth-pass": "pass"
+}
 ```
 
 ## RESULT
 
 ```
-URL: https://github.com/waniji/benchmark-tool
-Total Access Count: 10
-Concurrency: 3
+Total Access Count: 6
+Concurrency: 2
 --------------------------------------------------
-Response Time: 930 msec, Status: 200 OK
-Response Time: 931 msec, Status: 200 OK
-Response Time: 932 msec, Status: 200 OK
-Response Time: 796 msec, Status: 200 OK
-Response Time: 807 msec, Status: 200 OK
-Response Time: 837 msec, Status: 200 OK
-Response Time: 760 msec, Status: 200 OK
-Response Time: 796 msec, Status: 200 OK
-Response Time: 831 msec, Status: 200 OK
-Response Time: 721 msec, Status: 200 OK
+Time: 100 msec, Status: 200 OK, URL: http://www.google.com
+Time: 1503 msec, Status: 200 OK, URL: http://github.com
+Time: 1408 msec, Status: 200 OK, URL: http://github.com
+Time: 77 msec, Status: 200 OK, URL: http://www.google.com
+Time: 90 msec, Status: 200 OK, URL: http://www.google.com
+Time: 999 msec, Status: 200 OK, URL: http://github.com
 --------------------------------------------------
-Total Time           : 3251 msec
-Average Response Time: 834 msec
-Minimum Response Time: 721 msec
-Maximum Response Time: 932 msec
+Total Time           : 2508 msec
+Average Response Time: 696 msec
+Minimum Response Time: 77 msec
+Maximum Response Time: 1503 msec
 ```
 
 ## AUTHOR
