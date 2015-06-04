@@ -31,27 +31,27 @@ func main() {
 	app.Version = "0.0.1"
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
+			Name:  "config-file, f",
+			Usage: "設定ファイル",
+		},
+		cli.StringFlag{
 			Name:  "url, u",
 			Usage: "アクセスするURL",
 		},
 		cli.IntFlag{
 			Name:  "count, c",
-			Value: 1,
 			Usage: "URLにアクセスする回数",
 		},
 		cli.IntFlag{
 			Name:  "worker, w",
-			Value: 1,
 			Usage: "同時アクセス数",
 		},
 		cli.StringFlag{
 			Name:  "basic-auth-user",
-			Value: "",
 			Usage: "BASIC認証に使用するユーザー",
 		},
 		cli.StringFlag{
 			Name:  "basic-auth-pass",
-			Value: "",
 			Usage: "BASIC認証に使用するパスワード",
 		},
 	}
