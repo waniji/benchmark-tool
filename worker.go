@@ -8,6 +8,7 @@ import (
 type Worker struct {
 	client       http.Client
 	request      http.Request
+	statusCode   int
 	elapsedMsec  time.Duration
 	activeWorker chan struct{}
 	doneWorker   chan struct{}
@@ -24,8 +25,11 @@ func (w *Worker) Run() {
 	}()
 
 	start := time.Now()
-	w.client.Do(&w.request)
+	resp, _ := w.client.Do(&w.request)
 	w.elapsedMsec = time.Now().Sub(start) / time.Millisecond
+	defer resp.Body.Close()
+
+	w.statusCode = resp.StatusCode
 }
 
 type Result struct {
@@ -33,4 +37,6 @@ type Result struct {
 	averageElapsedMsec time.Duration
 	minimumElapsedMsec time.Duration
 	maximumElapsedMsec time.Duration
+	success            int
+	failure            int
 }

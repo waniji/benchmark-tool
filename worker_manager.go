@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -25,6 +26,7 @@ func (manager *WorkerManager) Start() {
 	watcher.WaitForFinish()
 
 	manager.result.totalElapsedMsec = watcher.elapsedMsec
+	manager.CountStatusCode()
 	manager.CalcElapsedTime()
 	manager.Cleanup()
 }
@@ -91,6 +93,16 @@ func (wm *WorkerManager) CalcElapsedTime() {
 		}
 	}
 	wm.result.averageElapsedMsec = sumTotalElapsedMsec / time.Duration(wm.maxAccess)
+}
+
+func (wm *WorkerManager) CountStatusCode() {
+	for _, worker := range wm.workers {
+		if strconv.Itoa(worker.statusCode)[0:1] == "2" {
+			wm.result.success++
+		} else {
+			wm.result.failure++
+		}
+	}
 }
 
 func (wm *WorkerManager) Cleanup() {
