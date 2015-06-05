@@ -30,12 +30,7 @@ func bench(c *cli.Context) {
 	fmt.Println("")
 	fmt.Printf("Total Access Count: %d\n", config.MaxAccess)
 	fmt.Printf("Concurrency: %d\n", config.MaxWorkers)
-	fmt.Println("")
-	fmt.Printf("Success: %d\n", manager.result.success)
-	fmt.Printf("Failure: %d\n", manager.result.failure)
-	fmt.Println("")
-	fmt.Printf("Total Time           : %d msec\n", manager.result.totalElapsedMsec)
-	fmt.Printf("Average Response Time: %d msec\n", manager.result.averageElapsedMsec)
-	fmt.Printf("Minimum Response Time: %d msec\n", manager.result.minimumElapsedMsec)
-	fmt.Printf("Maximum Response Time: %d msec\n", manager.result.maximumElapsedMsec)
+
+	manager.result.ShowStausCount()
+	manager.result.ShowElapsedTime()
 }

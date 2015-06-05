@@ -31,12 +31,3 @@ func (w *Worker) Run() {
 
 	w.statusCode = resp.StatusCode
 }
-
-type Result struct {
-	totalElapsedMsec   time.Duration
-	averageElapsedMsec time.Duration
-	minimumElapsedMsec time.Duration
-	maximumElapsedMsec time.Duration
-	success            int
-	failure            int
-}
