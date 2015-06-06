@@ -38,20 +38,32 @@ benchmark-tool [options]
 ## RESULT
 
 ```
-Total Access Count: 6
-Concurrency: 2
---------------------------------------------------
-Time: 100 msec, Status: 200 OK, URL: http://www.google.com
-Time: 1503 msec, Status: 200 OK, URL: http://github.com
-Time: 1408 msec, Status: 200 OK, URL: http://github.com
-Time: 77 msec, Status: 200 OK, URL: http://www.google.com
-Time: 90 msec, Status: 200 OK, URL: http://www.google.com
-Time: 999 msec, Status: 200 OK, URL: http://github.com
---------------------------------------------------
-Total Time           : 2508 msec
-Average Response Time: 696 msec
-Minimum Response Time: 77 msec
-Maximum Response Time: 1503 msec
+30 / 30 [==============================================================================] 100.00 % 2s
+
+Total Access Count: 30
+Concurrency: 10
+Total Time: 2548 msec
+
+[all]
+Success: 30
+Failure: 0
+Average Response Time: 695 msec
+Minimum Response Time: 85 msec
+Maximum Response Time: 1857 msec
+
+[http://github.com]
+Success: 15
+Failure: 0
+Average Response Time: 1287 msec
+Minimum Response Time: 1009 msec
+Maximum Response Time: 1857 msec
+
+[http://www.google.com]
+Success: 15
+Failure: 0
+Average Response Time: 104 msec
+Minimum Response Time: 85 msec
+Maximum Response Time: 136 msec
 ```
 
 ## AUTHOR
