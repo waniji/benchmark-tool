@@ -8,15 +8,15 @@ import (
 )
 
 type WorkerManager struct {
-	workers       []*Worker
-	urls          []string
-	basicAuthUser string
-	basicAuthPass string
-	maxAccess     int
-	maxWorkers    int
-	result        Result
-	activeWorker  chan struct{}
-	doneWorker    chan struct{}
+	workers          []*Worker
+	urls             []string
+	basicAuthUser    string
+	basicAuthPass    string
+	maxAccess        int
+	maxWorkers       int
+	totalElapsedMsec time.Duration
+	activeWorker     chan struct{}
+	doneWorker       chan struct{}
 }
 
 func (manager *WorkerManager) Start() {
@@ -24,10 +24,7 @@ func (manager *WorkerManager) Start() {
 	watcher.Start()
 	manager.RunWorkers()
 	watcher.WaitForFinish()
-
-	manager.result.totalElapsedMsec = watcher.elapsedMsec
-	manager.CountStatusCode()
-	manager.CalcElapsedTime()
+	manager.totalElapsedMsec = watcher.elapsedMsec
 	manager.Cleanup()
 }
 
@@ -80,32 +77,59 @@ func (wm *WorkerManager) NeedToBasicAuthSet() bool {
 	return false
 }
 
-func (wm *WorkerManager) CalcElapsedTime() {
-
-	var sumTotalElapsedMsec time.Duration
-	for _, worker := range wm.workers {
-		sumTotalElapsedMsec += worker.elapsedMsec
-		if wm.result.maximumElapsedMsec < worker.elapsedMsec {
-			wm.result.maximumElapsedMsec = worker.elapsedMsec
-		}
-		if wm.result.minimumElapsedMsec > worker.elapsedMsec || wm.result.minimumElapsedMsec == 0 {
-			wm.result.minimumElapsedMsec = worker.elapsedMsec
-		}
-	}
-	wm.result.averageElapsedMsec = sumTotalElapsedMsec / time.Duration(wm.maxAccess)
-}
-
-func (wm *WorkerManager) CountStatusCode() {
-	for _, worker := range wm.workers {
-		if strconv.Itoa(worker.statusCode)[0:1] == "2" {
-			wm.result.success++
-		} else {
-			wm.result.failure++
-		}
-	}
-}
-
 func (wm *WorkerManager) Cleanup() {
 	close(wm.activeWorker)
 	close(wm.doneWorker)
+}
+
+func (wm *WorkerManager) ShowResults() {
+
+	fmt.Println("")
+	fmt.Printf("Total Access Count: %d\n", wm.maxAccess)
+	fmt.Printf("Concurrency: %d\n", wm.maxWorkers)
+	fmt.Printf("Total Time: %d msec\n", wm.totalElapsedMsec)
+
+	results := wm.CreateBaseResults()
+	wm.CountStatusCode(results)
+	wm.CalcElapsedTime(results)
+
+	results.ShowResultsOfAll()
+	results.ShowResultsOfEachURL()
+}
+
+func (wm *WorkerManager) CreateBaseResults() Results {
+	results := Results{}
+	for _, worker := range wm.workers {
+		url := worker.request.URL.String()
+		if _, exists := results[url]; exists == false {
+			results[url] = &Result{}
+		}
+	}
+	return results
+}
+
+func (wm *WorkerManager) CalcElapsedTime(results Results) {
+	for _, worker := range wm.workers {
+		url := worker.request.URL.String()
+		results[url].sumElapsedMsec += worker.elapsedMsec
+
+		if results[url].maximumElapsedMsec < worker.elapsedMsec {
+			results[url].maximumElapsedMsec = worker.elapsedMsec
+		}
+
+		if results[url].minimumElapsedMsec > worker.elapsedMsec || results[url].minimumElapsedMsec == 0 {
+			results[url].minimumElapsedMsec = worker.elapsedMsec
+		}
+	}
+}
+
+func (wm *WorkerManager) CountStatusCode(results Results) {
+	for _, worker := range wm.workers {
+		url := worker.request.URL.String()
+		if strconv.Itoa(worker.statusCode)[0:1] == "2" {
+			results[url].success++
+		} else {
+			results[url].failure++
+		}
+	}
 }

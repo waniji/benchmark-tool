@@ -27,10 +27,5 @@ func bench(c *cli.Context) {
 	}
 	manager.Start()
 
-	fmt.Println("")
-	fmt.Printf("Total Access Count: %d\n", config.MaxAccess)
-	fmt.Printf("Concurrency: %d\n", config.MaxWorkers)
-
-	manager.result.ShowStausCount()
-	manager.result.ShowElapsedTime()
+	manager.ShowResults()
 }
