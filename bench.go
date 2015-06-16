@@ -16,6 +16,13 @@ func bench(c *cli.Context) {
 		os.Exit(1)
 	}
 
+	formatter, err := CreateFormatter(config.Format)
+	if err != nil {
+		fmt.Println(err)
+		cli.ShowAppHelp(c)
+		os.Exit(1)
+	}
+
 	manager := &WorkerManager{
 		urls:          config.URLs,
 		basicAuthUser: config.BasicAuthUser,
@@ -32,13 +39,5 @@ func bench(c *cli.Context) {
 	fmt.Printf("Concurrency: %d\n", manager.maxWorkers)
 	fmt.Printf("Total Time: %d msec\n", manager.totalElapsedMsec)
 
-	for _, result := range results {
-		fmt.Println("")
-		fmt.Printf("[%s]\n", result.url)
-		fmt.Printf("Success: %d\n", result.success)
-		fmt.Printf("Failure: %d\n", result.failure)
-		fmt.Printf("Average Response Time: %d msec\n", result.averageElapsedMsec())
-		fmt.Printf("Minimum Response Time: %d msec\n", result.minimumElapsedMsec)
-		fmt.Printf("Maximum Response Time: %d msec\n", result.maximumElapsedMsec)
-	}
+	formatter.Print(results)
 }

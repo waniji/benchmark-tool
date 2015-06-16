@@ -17,6 +17,7 @@ benchmark-tool [options]
 --worker, -w "0"     同時アクセス数
 --basic-auth-user    BASIC認証に使用するユーザー
 --basic-auth-pass    BASIC認証に使用するパスワード
+--format "simple"    実行結果の出力フォーマット
 --version, -v        print the version
 ```
 

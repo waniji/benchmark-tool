@@ -54,6 +54,11 @@ func main() {
 			Name:  "basic-auth-pass",
 			Usage: "BASIC認証に使用するパスワード",
 		},
+		cli.StringFlag{
+			Name:  "format",
+			Value: "simple",
+			Usage: "実行結果の出力フォーマット",
+		},
 	}
 	app.Action = bench
 	cli.AppHelpTemplate = helpTemplate

@@ -14,6 +14,7 @@ type Config struct {
 	MaxWorkers    int      `json:"worker"`
 	BasicAuthUser string   `json:"basic-auth-user"`
 	BasicAuthPass string   `json:"basic-auth-pass"`
+	Format        string   `json:"format"`
 }
 
 func (config *Config) Create(context *cli.Context) error {
@@ -62,6 +63,9 @@ func (config *Config) setFromArgs(context *cli.Context) {
 	}
 	if context.String("basic-auth-pass") != "" {
 		config.BasicAuthPass = context.String("basic-auth-pass")
+	}
+	if context.String("format") != "" {
+		config.Format = context.String("format")
 	}
 }
 
