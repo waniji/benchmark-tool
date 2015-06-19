@@ -15,6 +15,8 @@ func CreateFormatter(formatter_name string) (Formatter, error) {
 	switch formatter_name {
 	case "simple":
 		formatter = &FormatterSimple{}
+	case "table":
+		formatter = &FormatterTable{}
 	default:
 		err = errors.New("formatが不正です: " + formatter_name)
 	}
