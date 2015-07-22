@@ -9,14 +9,24 @@ import (
 func bench(c *cli.Context) {
 
 	var config Config
+	var formatter Formatter
+	var sorter ResultsSorter
+	var err error
 
-	if err := config.Create(c); err != nil {
+	if err = config.Create(c); err != nil {
 		fmt.Println(err)
 		cli.ShowAppHelp(c)
 		os.Exit(1)
 	}
 
-	formatter, err := CreateFormatter(config.Format)
+	formatter, err = CreateFormatter(config.Format)
+	if err != nil {
+		fmt.Println(err)
+		cli.ShowAppHelp(c)
+		os.Exit(1)
+	}
+
+	sorter, err = CreateSorter(config.Sort)
 	if err != nil {
 		fmt.Println(err)
 		cli.ShowAppHelp(c)
@@ -33,6 +43,8 @@ func bench(c *cli.Context) {
 		doneWorker:    make(chan struct{}, config.MaxAccess),
 	}
 	results := manager.Start()
+
+	sorter.Sort(results[1:])
 
 	fmt.Println("")
 	fmt.Printf("Total Access Count: %d\n", manager.maxAccess)

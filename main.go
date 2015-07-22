@@ -59,6 +59,11 @@ func main() {
 			Value: "simple",
 			Usage: "実行結果の出力フォーマット",
 		},
+		cli.StringFlag{
+			Name:  "sort",
+			Value: "average",
+			Usage: "実行結果のソートキー",
+		},
 	}
 	app.Action = bench
 	cli.AppHelpTemplate = helpTemplate

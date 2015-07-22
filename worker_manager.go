@@ -110,7 +110,7 @@ func (wm *WorkerManager) AggregateWorkerResult() Results {
 		}
 	}
 
-	allResult := &Result{url: "all"}
+	allResult := Result{url: "all"}
 	for _, result := range resultMap {
 		allResult.success += result.success
 		allResult.failure += result.failure
@@ -127,7 +127,7 @@ func (wm *WorkerManager) AggregateWorkerResult() Results {
 	results = append(results, allResult)
 	for key, value := range resultMap {
 		value.url = key
-		results = append(results, value)
+		results = append(results, *value)
 	}
 
 	return results

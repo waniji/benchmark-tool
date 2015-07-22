@@ -15,6 +15,7 @@ type Config struct {
 	BasicAuthUser string   `json:"basic-auth-user"`
 	BasicAuthPass string   `json:"basic-auth-pass"`
 	Format        string   `json:"format"`
+	Sort          string   `json:"sort"`
 }
 
 func (config *Config) Create(context *cli.Context) error {
@@ -66,6 +67,9 @@ func (config *Config) setFromArgs(context *cli.Context) {
 	}
 	if context.String("format") != "" {
 		config.Format = context.String("format")
+	}
+	if context.String("sort") != "" {
+		config.Sort = context.String("sort")
 	}
 }
 

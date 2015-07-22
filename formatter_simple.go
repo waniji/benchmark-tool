@@ -12,7 +12,7 @@ func (f *FormatterSimple) Print(results Results) {
 	}
 }
 
-func (f *FormatterSimple) PrintResult(r *Result) {
+func (f *FormatterSimple) PrintResult(r Result) {
 	fmt.Println("")
 	fmt.Printf("[%s]\n", r.url)
 	fmt.Printf("Success: %d\n", r.success)
